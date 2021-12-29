@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: Calculations API
+  version: '1.0'
+servers:
+  - url: 'https://fddqqjezma.execute-api.eu-central-1.amazonaws.com'
+paths:
+  /calculations:
+    get:
+      summary: List calculations
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  calculations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/calculationResult'
+      operationId: get-calculations
+    post:
+      summary: Start Calculation
+      operationId: post-calculations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/calculationResult'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/calculationInput'
+      description: ''
+components:
+  schemas:
+    calculationResult:
+      title: Calculation Result
+      type: object
+      properties:
+        calculation_id:
+          type: string
+          format: uuid
+          example: b63270ef-bc7f-430f-a952-e70553cc8725
+          readOnly: true
+        calculated_at:
+          type: string
+          format: date-time
+          example: '2021-12-28T21:34:53.050176'
+          readOnly: true
+        input:
+          $ref: '#/components/schemas/calculationInput'
+        result:
+          type: object
+          properties:
+            count:
+              type: integer
+              minimum: 0
+              example: 10
+              readOnly: true
+            sum_damage:
+              type: number
+              minimum: 0
+              example: 230.9112921901275
+              readOnly: true
+          readOnly: true
+      examples:
+        - calculation_id: b63270ef-bc7f-430f-a952-e70553cc8725
+          calculated_at: '2021-12-28T21:34:53.050176'
+          input:
+            fail_probability: 0.078
+            transport_amount: 104
+            excess_losses: 100.56
+            disadvantage_losses: 900
+          result:
+            count: 10
+            sum_damage: 230.9112921901275
+    calculationInput:
+      title: Calculation Input
+      type: object
+      properties:
+        fail_probability:
+          type: number
+          example: 0.078
+          minimum: 0
+          maximum: 1
+        transport_amount:
+          type: integer
+          example: 104
+          minimum: 1
+        excess_losses:
+          type: number
+          example: 100.56
+          minimum: 0
+        disadvantage_losses:
+          type: number
+          minimum: 0
+          example: 900
+      examples:
+        - fail_probability: 0.078
+          transport_amount: 104
+          excess_losses: 100.56
+          disadvantage_losses: 900

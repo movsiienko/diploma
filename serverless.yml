@@ -1,0 +1,89 @@
+service: movsiidenko-diploma
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+
+plugins:
+  - serverless-python-requirements
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: eu-central-1
+  httpApi:
+    cors: true
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:PutItem"
+        - "dynamodb:Query"
+      Resource:
+        - { "Fn::GetAtt": [ "Table", "Arn" ] }
+        - Fn::Join:
+            - "/"
+            - - { "Fn::GetAtt": [ "Table", "Arn" ] }
+              - "index/*"
+
+package:
+  include:
+    - '!./**'
+    - './src/**'
+  exclude:
+    - '**'
+
+
+functions:
+  calculate:
+    handler: src.calculate.handler
+    timeout: 30
+    environment:
+      TABLE_NAME:
+        Ref: Table
+    events:
+      - httpApi: POST /calculations
+
+  listCalculations:
+    handler: src.list_calculations.handler
+    environment:
+      TABLE_NAME:
+        Ref: Table
+    events:
+      - httpApi: GET /calculations
+
+
+resources:
+  Resources:
+    Table:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+          - AttributeName: type
+            AttributeType: S
+          - AttributeName: calculated_at
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: type_calculated_at
+            KeySchema:
+              - AttributeName: type
+                KeyType: HASH
+              - AttributeName: calculated_at
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 3
+              WriteCapacityUnits: 3
+        ProvisionedThroughput:
+          ReadCapacityUnits: 3
+          WriteCapacityUnits: 3
